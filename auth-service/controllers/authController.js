@@ -5,7 +5,7 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "24h" });
 };
 
-// Register new user
+// Register new user (/auth/register)
 const register = async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -47,7 +47,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login user
+// Login user (/auth/login)
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -91,7 +91,7 @@ const login = async (req, res) => {
   }
 };
 
-// Get user profile
+// Get user profile (/auth/profile)
 const getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
