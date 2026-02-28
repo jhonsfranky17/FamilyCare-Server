@@ -20,7 +20,7 @@ app.use(express.json());
 testConnection();
 
 sequelize
-  .sync({ alter: true })
+  .sync({ alter: false })
   .then(() => {
     console.log("Database synced");
   })
