@@ -16,6 +16,14 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// Health check
+app.get("/health", (_, res) => {
+  res.json({
+    status: "healthy",
+    service: "family-service",
+  });
+});
+
 // Test database connection
 testConnection();
 
@@ -30,14 +38,6 @@ sequelize
 
 // Routes
 app.use("/families", familyRoutes);
-
-// Health check
-app.get("/health", (_, res) => {
-  res.json({
-    status: "healthy",
-    service: "family-service",
-  });
-});
 
 // Start server
 app.listen(PORT, () => {

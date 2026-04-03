@@ -79,7 +79,7 @@ const markAsTaken = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
-    // Find medication
+    // Find medication with patient
     const medication = await Medication.findByPk(id, {
       include: [{ model: Patient }],
     });
@@ -103,23 +103,29 @@ const markAsTaken = async (req, res) => {
     // Invalidate cache
     await redis.del(`patient:${medication.patient_id}:medications`);
 
-    // Publish to Redis for real-time updates
-    await redis.publish(
-      "medication:updates",
-      JSON.stringify({
-        type: "taken",
-        patientId: medication.patient_id,
-        patientName: medication.Patient.name,
-        medicationName: medication.name,
-        takenBy: req.user.name,
-        time: new Date().toISOString(),
-      }),
-    );
+    // PUBLISH TO REDIS FOR REAL-TIME UPDATES
+    const eventData = {
+      type: "TAKEN",
+      medicationId: medication.id,
+      medicationName: medication.name,
+      patientId: medication.patient_id,
+      patientName: medication.Patient.name,
+      familyId: medication.Patient.family_id,
+      takenBy: req.user.name || "Family Member",
+      time: new Date().toISOString(),
+      logId: log.id,
+    };
+
+    // Publish to Redis
+    await redis.publish("medication:taken", JSON.stringify(eventData));
+
+    console.log("Published medication:taken event:", eventData);
 
     res.json({
       success: true,
       message: "Medication marked as taken",
       log,
+      realtime: "Update sent to family members",
     });
   } catch (error) {
     console.error("Mark as taken error:", error);
