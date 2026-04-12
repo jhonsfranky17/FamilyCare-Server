@@ -9,6 +9,7 @@ const { sequelize, testConnection } = require("./config/database");
 const healthRoutes = require("./routes/healthRoutes");
 const { setupSocket } = require("./socket");
 const { initializeReminders } = require("./queues/medicationQueue");
+const { initializeMissedChecks } = require("./queues/missedMedicationQueue");
 require("./models");
 
 dotenv.config();
@@ -56,6 +57,7 @@ sequelize
     console.log("Database synced");
     // Initialize medication reminders
     initializeReminders();
+    initializeMissedChecks();
   })
   .catch((err) => console.error("Sync error:", err));
 

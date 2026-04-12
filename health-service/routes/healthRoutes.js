@@ -25,6 +25,10 @@ router.get(
   "/patients/:patientId/history",
   medicationController.getMedicationHistory,
 );
+router.get(
+  "/patients/:patientId/missed",
+  medicationController.getMissedMedications,
+);
 
 // External API route
 router.get("/drug-info/:name", medicationController.getDrugInfo);

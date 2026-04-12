@@ -92,6 +92,7 @@ const setupSocket = (server) => {
   redisSub.subscribe(
     "medication:reminders",
     "medication:taken",
+    "medication:missed", // ← added for missed medications
     "family:updates",
   );
 
@@ -101,17 +102,18 @@ const setupSocket = (server) => {
 
     switch (channel) {
       case "medication:reminders":
-        // Broadcast reminder to family room
         io.to(`family:${data.familyId}`).emit("medication-reminder", data);
         break;
 
       case "medication:taken":
-        // Broadcast taken confirmation to family room
         io.to(`family:${data.familyId}`).emit("medication-taken", data);
         break;
 
+      case "medication:missed": // handle missed events
+        io.to(`family:${data.familyId}`).emit("medication-missed", data);
+        break;
+
       case "family:updates":
-        // Broadcast general family updates
         io.to(`family:${data.familyId}`).emit("family-update", data);
         break;
     }
@@ -124,12 +126,14 @@ const setupSocket = (server) => {
 const emitToUser = (userId, event, data) => {
   const socketId = activeUsers.get(userId);
   if (socketId) {
+    const io = require("socket.io").server;
     io.to(socketId).emit(event, data);
   }
 };
 
 // Helper to emit to family
 const emitToFamily = (familyId, event, data) => {
+  const io = require("socket.io").server;
   io.to(`family:${familyId}`).emit(event, data);
 };
 
