@@ -3,19 +3,24 @@ const Redis = require("ioredis");
 const { Medication, Patient, MedicationLog } = require("../models");
 const { Op } = require("sequelize");
 
-const connection = new Redis({ host: "localhost", port: 6379 });
+// Correct Redis connection for BullMQ
+const connection = new Redis({
+  host: "localhost",
+  port: 6379,
+  maxRetriesPerRequest: null,
+});
 
 // Queue for checking missed medications
 const missedQueue = new Queue("missed-medications", { connection });
 
-// Worker that runs daily to find missed medications
+// Worker that runs to find missed medications
 const missedWorker = new Worker(
   "missed-medications",
   async (job) => {
-    const { medicationId, scheduledTime, patientId, familyId } = job.data;
+    const { medicationId, patientId, familyId, scheduleTime } = job.data;
 
     console.log(
-      `Checking missed medication ${medicationId} scheduled at ${scheduledTime}`,
+      `Checking missed medication ${medicationId} scheduled at ${scheduleTime}`,
     );
 
     // Get today's date range
@@ -45,23 +50,26 @@ const missedWorker = new Worker(
         notes: "Auto-detected missed medication",
       });
 
-      console.log(
-        `❌ Missed medication ${medicationId} for patient ${patientId}`,
-      );
+      console.log(`Missed medication ${medicationId} for patient ${patientId}`);
 
       // Publish missed event for real-time notification
-      const redis = new Redis({ host: "localhost", port: 6379 });
-      await redis.publish(
+      const redisPub = new Redis({
+        host: "localhost",
+        port: 6379,
+        maxRetriesPerRequest: null,
+      });
+      await redisPub.publish(
         "medication:missed",
         JSON.stringify({
           type: "MISSED",
           medicationId,
           patientId,
-          scheduledTime,
+          scheduleTime,
           familyId,
           timestamp: new Date().toISOString(),
         }),
       );
+      await redisPub.quit();
     }
 
     return { checked: true, wasTaken: !!takenLog };
@@ -77,17 +85,13 @@ const scheduleMissedCheck = async (
   scheduleTime,
   graceMinutes = 120,
 ) => {
-  // Parse schedule time (e.g., "08:00:00")
   const [hours, minutes] = scheduleTime.split(":");
 
   const now = new Date();
   const checkTime = new Date();
   checkTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-  // Add grace period
   checkTime.setMinutes(checkTime.getMinutes() + graceMinutes);
 
-  // If check time has passed today, schedule for tomorrow
   if (checkTime < now) {
     checkTime.setDate(checkTime.getDate() + 1);
   }
@@ -96,11 +100,11 @@ const scheduleMissedCheck = async (
 
   await missedQueue.add(
     `missed-${medicationId}`,
-    { medicationId, patientId, familyId, scheduledTime: scheduleTime },
+    { medicationId, patientId, familyId, scheduleTime }, // Fixed variable name
     {
       delay,
-      jobId: `missed-${medicationId}-${checkTime.toISOString().split("T")[0]}`, // unique per day
-      repeat: { pattern: `${minutes} ${parseInt(hours) + 2} * * *` }, // 2 hours after schedule
+      jobId: `missed-${medicationId}-${checkTime.toISOString().split("T")[0]}`,
+      repeat: { pattern: `${minutes} ${parseInt(hours) + 2} * * *` },
     },
   );
 
@@ -124,7 +128,7 @@ const initializeMissedChecks = async () => {
       med.patient_id,
       med.Patient.family_id,
       med.schedule,
-      120, // 2 hours grace period
+      120,
     );
   }
 
