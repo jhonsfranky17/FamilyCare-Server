@@ -14,10 +14,10 @@ const login = async () => {
       email: "test@example.com",
       password: "password123",
     });
-    console.log("✅ Login successful");
+    console.log("Login successful");
     return response.data.token;
   } catch (error) {
-    console.error("❌ Login failed:", error.response?.data || error.message);
+    console.error("Login failed:", error.response?.data || error.message);
   }
 };
 
@@ -27,12 +27,9 @@ const getProfile = async (token) => {
     const response = await axios.get(`${GATEWAY_URL}/auth/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("✅ Profile retrieved:", response.data.user.name);
+    console.log("Profile retrieved:", response.data.user.name);
   } catch (error) {
-    console.error(
-      "❌ Get profile failed:",
-      error.response?.data || error.message,
-    );
+    console.error("Get profile failed:", error.response?.data || error.message);
   }
 };
 
@@ -44,11 +41,11 @@ const createFamily = async (token) => {
       { name: "Smith Family" },
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    console.log("✅ Family created:", response.data.family.name);
+    console.log("Family created:", response.data.family.name);
     return response.data.family.id;
   } catch (error) {
     console.error(
-      "❌ Create family failed:",
+      "Create family failed:",
       error.response?.data || error.message,
     );
   }
@@ -60,12 +57,9 @@ const getMembers = async (token, id) => {
     const response = await axios.get(`${GATEWAY_URL}/families/${id}/members`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log(`✅ ${response.data.members.length} family member(s) found`);
+    console.log(`${response.data.members.length} family member(s) found`);
   } catch (error) {
-    console.error(
-      "❌ Get members failed:",
-      error.response?.data || error.message,
-    );
+    console.error("Get members failed:", error.response?.data || error.message);
   }
 };
 
@@ -82,11 +76,11 @@ const createPatient = async (token) => {
       },
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    console.log("✅ Patient created:", response.data.patient.name);
+    console.log("Patient created:", response.data.patient.name);
     return response.data.patient.id;
   } catch (error) {
     console.error(
-      "❌ Create patient failed:",
+      "Create patient failed:",
       error.response?.data || error.message,
     );
   }
@@ -106,11 +100,11 @@ const addMedication = async (token, patientId) => {
       },
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    console.log("✅ Medication added:", response.data.medication.name);
+    console.log("Medication added:", response.data.medication.name);
     return response.data.medication.id;
   } catch (error) {
     console.error(
-      "❌ Add medication failed:",
+      "Add medication failed:",
       error.response?.data || error.message,
     );
   }
@@ -123,10 +117,10 @@ const getMedications = async (token, patientId) => {
       `${GATEWAY_URL}/health/patients/${patientId}/medications`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    console.log(`✅ ${response.data.medications.length} medication(s) found`);
+    console.log(`${response.data.medications.length} medication(s) found`);
   } catch (error) {
     console.error(
-      "❌ Get medications failed:",
+      "Get medications failed:",
       error.response?.data || error.message,
     );
   }
@@ -140,11 +134,11 @@ const markAsTaken = async (token, medicationId) => {
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    console.log("✅ Medication marked as taken!");
-    console.log("   📢 Real-time update sent to family members");
+    console.log("Medication marked as taken!");
+    console.log("Real-time update sent to family members");
   } catch (error) {
     console.error(
-      "❌ Mark as taken failed:",
+      "Mark as taken failed:",
       error.response?.data || error.message,
     );
   }
@@ -157,13 +151,10 @@ const getDrugInfo = async (token, drugName) => {
       `${GATEWAY_URL}/health/drug-info/${drugName}`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    console.log(`✅ Drug info retrieved for: ${response.data.drug.name}`);
+    console.log(`Drug info retrieved for: ${response.data.drug.name}`);
     console.log(`   Source: ${response.data.source}`);
   } catch (error) {
-    console.error(
-      "❌ Drug info failed:",
-      error.response?.data || error.message,
-    );
+    console.error("Drug info failed:", error.response?.data || error.message);
   }
 };
 
@@ -171,7 +162,7 @@ const getDrugInfo = async (token, drugName) => {
 const runTests = async () => {
   console.log("\n");
   console.log("═══════════════════════════════════════════════════════");
-  console.log("     🚀 FAMILYCARE API GATEWAY TEST SUITE");
+  console.log("     FAMILYCARE API GATEWAY TEST SUITE");
   console.log("═══════════════════════════════════════════════════════\n");
 
   // Login
@@ -206,7 +197,7 @@ const runTests = async () => {
   await getDrugInfo(authToken, "Metformin");
 
   console.log("\n═══════════════════════════════════════════════════════");
-  console.log("     ✅ ALL TESTS PASSED THROUGH GATEWAY!");
+  console.log("     ALL TESTS PASSED THROUGH GATEWAY!");
   console.log("═══════════════════════════════════════════════════════\n");
 };
 

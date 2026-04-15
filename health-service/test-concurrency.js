@@ -30,7 +30,7 @@ async function testConcurrency() {
     console.log("Could not fetch medications, using ID 1 (may fail)");
   }
 
-  const medicationId = 1; // Change to an ID that exists in your system
+  const medicationId = 1;
 
   console.log(
     `\nSending 5 concurrent requests to mark medication ${medicationId} as taken...\n`,

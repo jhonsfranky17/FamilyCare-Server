@@ -1,37 +1,49 @@
-const {
-  medicationQueue,
-  scheduleReminders,
-  initializeReminders,
-} = require("./src/queues/medicationQueue");
-const { Medication, Patient } = require("./src/models");
+const { medicationQueue } = require("./queues/medicationQueue");
+const { Op } = require("sequelize");
 
-const testQueue = async () => {
-  console.log("🧪 Testing BullMQ Queue...\n");
+async function showQueueStats() {
+  console.log("\nBullMQ Queue Statistics\n");
 
-  // Initialize all reminders
-  await initializeReminders();
+  // Get accurate job counts
+  const waitingCount = await medicationQueue.getWaitingCount();
+  const activeCount = await medicationQueue.getActiveCount();
+  const completedCount = await medicationQueue.getCompletedCount();
+  const failedCount = await medicationQueue.getFailedCount();
+  const delayedCount = await medicationQueue.getDelayedCount();
 
-  // Check queue status
-  const jobs = await medicationQueue.getJobs(["waiting", "active", "delayed"]);
-  console.log(`📊 Queue stats:`);
-  console.log(`- Total jobs: ${jobs.length}`);
-  console.log(`- Waiting: ${jobs.filter((j) => j.isWaiting()).length}`);
-  console.log(`- Active: ${jobs.filter((j) => j.isActive()).length}`);
-  console.log(`- Delayed: ${jobs.filter((j) => j.isDelayed()).length}`);
+  console.log(`Waiting: ${waitingCount}`);
+  console.log(`Active: ${activeCount}`);
+  console.log(`Completed: ${completedCount}`);
+  console.log(`Failed: ${failedCount}`);
+  console.log(`Delayed: ${delayedCount}`);
 
-  // Show next few jobs
-  const delayedJobs = await medicationQueue.getJobs(["delayed"]);
-  console.log("\n⏰ Upcoming reminders:");
-  for (const job of delayedJobs.slice(0, 5)) {
-    const delay = job.delay;
-    const hours = Math.floor(delay / 3600000);
-    const minutes = Math.floor((delay % 3600000) / 60000);
+  // Get delayed jobs (scheduled reminders)
+  const delayedJobs = await medicationQueue.getDelayed();
+  console.log(`\nNext ${Math.min(5, delayedJobs.length)} upcoming reminders:`);
+
+  for (let i = 0; i < Math.min(5, delayedJobs.length); i++) {
+    const job = delayedJobs[i];
+    const delayMs = job.delay || 0;
+    const delayMinutes = Math.floor(delayMs / 60000);
+    const hours = Math.floor(delayMinutes / 60);
+    const minutes = delayMinutes % 60;
+
+    // Try to get medication name from job data
+    const medicationId = job.data.medicationId;
+    let medicationName = "Unknown";
+
+    // Optionally fetch from database (commented out to avoid extra queries)
+    // const med = await Medication.findByPk(medicationId);
+    // if (med) medicationName = med.name;
+
     console.log(
-      `- ${job.data.medicationName} for patient ${job.data.patientId} in ${hours}h ${minutes}m`,
+      `   - Medication ID ${medicationId} will run in ${hours}h ${minutes}m`,
     );
   }
 
-  process.exit();
-};
+  console.log(
+    `\nTip: Visit http://localhost:3003/admin/queues to see the visual dashboard`,
+  );
+}
 
-testQueue().catch(console.error);
+showQueueStats().catch(console.error);
